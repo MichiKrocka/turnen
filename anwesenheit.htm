@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html style="">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=EDGE">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=yes">
+  <title>Anwesenheit</title>
+<script async type="text/javascript" src="/lib/js/fallback.min.js"></script>
+<style type="text/css">
+<!--
+body,html,select {
+  font-size:100%;
+}
+table {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  width:100%;
+  border-collapse:collapse;
+}
+td:nth-child(1), th:nth-child(1) {
+  width:2%;
+}
+td:nth-child(2), th:nth-child(2) {
+  width:22%;
+}
+td:nth-child(3), th:nth-child(3),
+td:nth-child(4), th:nth-child(4) {
+  width:38%;
+}
+table.c_body td:nth-child(1) {
+  text-align:center;
+}
+table.c_body {
+  counter-reset:rowNumber;
+  margin-top:50px;
+}
+table.c_body tr {
+  counter-increment:rowNumber;
+}
+table.c_body tr td:first-child::before {
+  content:counter(rowNumber);
+}
+table.c_body td div {
+  display:inline-block;
+  background:green;
+  border:1px solid;
+  height:1em;
+  width:15%;
+  margin-right:3px;
+}
+-->
+</style>
+<script>
+var oFallback = {
+  // js
+  'jQuery': [
+    'https://code.jquery.com/jquery-3.1.1.min.js',
+    '/lib/js/jquery.min.js'
+  ],
+  'jQuery.printf': [
+    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.printf.min.js',
+    '/lib/js/jquery.printf.min.js'
+  ]
+};
+// ---------------------------------------------------------------------
+function load(){
+  if(location.href.substr(-1) == "#"){
+    for(var o in oFallback){
+      oFallback[o].reverse();
+    }
+  }
+  fallback.load(
+    oFallback,
+    {
+      shim: {
+      'jQuery.printf': ['jQuery']
+      }
+    }
+  );
+  fallback.ready(function(){
+    start();
+  });
+}
+// ---------------------------------------------------------------------
+var D = new Date(),
+    Y = D.getFullYear(),
+    M = D.getMonth() + 1;
+// ---------------------------------------------------------------------
+function start(){
+  var o = {
+    base: "database/turnen_sql/turnen.sqlite",
+    cmd:  [{
+      sgn:   "Y",
+      query: 'SELECT strftime("%Y", Datum) AS Y FROM GymEvent GROUP BY 1 ORDER BY 1 DESC',
+      para: []
+    }]
+  };
+  o.cmd = JSON.stringify(o.cmd);
+  $.post("/sql", o, function(D){
+    var A = [];
+    for(var y in D.Y)
+      A.push('<option value="'+D.Y[y].Y+'">'+D.Y[y].Y+'</option>');
+    $("select[name=Y]")
+    .html(A.join(""))
+    .val(Y);
+    $("select[name=M]")
+    .val(M);
+    $("select").change(function(ev){
+      if(this.name == "Y")
+        Y = this.value;
+      else
+        M = this.value;
+      make_divs();
+    });
+    make_divs();
+  });
+}
+// ---------------------------------------------------------------------
+function  make_divs(){
+  $("table.c_body").html('<tr><td style="display:none"></td><td style="font-size:2em">Bitte warten...</td></tr>');
+  var o = {
+    base: "database/turnen_sql/turnen.sqlite",
+    cmd:  [{
+      sgn:   "N",
+      query:
+       'SELECT \
+          Nachname||" "||Vorname AS Name,\
+          (SELECT COUNT(*) FROM GymEvent WHERE 1 AND\
+            ("," || GymEvent.Teilnehmer || ",") LIKE "%,"|| GymName.id ||",%"\
+            AND strftime("%Y", Datum) = ?||""\
+          ) AS YN,\
+          (SELECT COUNT(*) FROM GymEvent WHERE 1 AND\
+            ("," || GymEvent.Teilnehmer || ",") LIKE "%,"|| GymName.id ||",%"\
+            AND strftime("%Y-%m", Datum) = ?||"-"||?\
+          ) AS MN\
+        FROM GymName\
+        ORDER BY 2 DESC, 3 DESC',
+      para: [Y,Y,M]
+    },{
+      sgn:   "S",
+      query:
+       'SELECT \
+          MAX((SELECT COUNT(*) FROM GymEvent WHERE 1 AND\
+            ("," || GymEvent.Teilnehmer || ",") LIKE "%,"|| GymName.id ||",%"\
+            AND strftime("%Y", Datum) = ?||""\
+          )) AS YN,\
+          MAX((SELECT COUNT(*) FROM GymEvent WHERE 1 AND\
+            ("," || GymEvent.Teilnehmer || ",") LIKE "%,"|| GymName.id ||",%"\
+            AND strftime("%Y-%m", Datum) = ?||"-"||?\
+          )) AS MN\
+        FROM GymName\
+        ORDER BY 1',
+      para: [Y,Y,M]
+    }]
+  };
+//  console.log(o);return;
+  o.cmd = JSON.stringify(o.cmd);
+  $.post("/sql", o, function(D){
+    var A = [];
+    for(var i in D.N){
+      if(D.N[i].YN == 0)
+        continue;
+      var YW = Math.max(0, 100 * D.N[i].YN / D.S[0].YN - 15),
+          MW = Math.max(0, 100 * D.N[i].MN / D.S[0].MN - 15);
+      A.push(
+        '<tr>'+
+          '<td>.</td>',
+          '<td>'+D.N[i].Name+'</td>'+
+          '<td><div style="width:'+YW+'%"></div>'+D.N[i].YN+'</td>',
+          '<td><div style="width:'+MW+'%"></div>'+D.N[i].MN+'</td>',
+        '</tr>'
+      );
+    }
+    $("table.c_body").html(A.join(""));
+  });
+}
+// ---------------------------------------------------------------------
+</script>
+<body onload="load()">
+  <table style="position:fixed;top:5px;background:white">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>
+          <select name="Y"></select>
+        </th>
+        <th>
+          <select name="M">
+            <option value="01">Januar</option>
+            <option value="02">Februar</option>
+            <option value="03">März</option>
+            <option value="04">April</option>
+            <option value="05">Mai</option>
+            <option value="06">Juni</option>
+            <option value="07">Juli</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+            <option value="12">Dezember</option>
+          </select>
+        </th>
+      </tr>
+    </thead>
+  </table>
+  <table class="c_body">
+  </table>
+</body>
+</html>

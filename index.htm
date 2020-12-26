@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html style="width:100%;height:100%;overflow:hidden">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=EDGE">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=yes">
+  <title>Turnen</title>
+<script async type="text/javascript" src="/lib/js/fallback.min.js"></script>
+<script type="text/javascript">
+var oFallback = {
+  // css
+  'css_ui': [
+//    'https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.min.css',
+    'themes/base/jquery-ui.min.css'
+  ],
+  'css_awesome': [
+//    'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css',
+//    'https://use.fontawesome.com/568396c591.js',
+    '/lib/css/font-awesome.min.css'
+  ],
+  'css_tables': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/css/jquery.mk.tables.min.css',
+    '/lib/css/jquery.mk.tables.css'
+  ],
+  'css_tree': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/css/jquery.mk.tree.min.css',
+    '/lib/css/jquery.mk.tree.css'
+  ],
+  'css_index': [
+//    'http://www.bayern-surf.de/krocka/cdn/turnen/css/index.min.css',
+    'css/index.css'
+  ],
+  // js
+  'jQuery': [
+//    'https://code.jquery.com/jquery-3.1.1.min.js',
+    '/lib/js/jquery.min.js'
+  ],
+  'jQuery.ui': [
+//    'https://code.jquery.com/ui/1.12.1/jquery-ui.min.js',
+    '/lib/js/jquery-ui.min.js'
+  ],
+  'set_lang': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/locale.min.js',
+    '/lib/js/locale.js'
+  ],
+  'jQuery().mousewheel': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.mousewheel.min.js',
+    '/lib/js/jquery.mousewheel.min.js'
+  ],
+  'jQuery.datepicker.regional.de': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/datepicker-de.min.js',
+    '/lib/js/datepicker-de.js'
+  ],
+  'jQuery.cookie': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.cookie.min.js',
+    '/lib/js/jquery.cookie.min.js'
+  ],
+  'jQuery.printf': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.printf.min.js',
+    '/lib/js/jquery.printf.min.js'
+  ],
+  'jQuery.md5': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.md5.min.js',
+    '/lib/js/jquery.md5.min.js'
+  ],
+  'jQuery().stickyTableHeaders': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.stickytableheaders.min.js',
+    '/lib/js/jquery.stickytableheaders.min.js'
+  ],
+  'saveAs': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/FileSaver.min.js',
+    '/lib/js/FileSaver.min.js'
+  ],
+  'jQuery().tree': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.mk.tree.min.js',
+    '/lib/js/jquery.mk.tree.js'
+  ],
+  'jQuery().tables': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.mk.tables.min.js',
+    '/lib/js/jquery.mk.tables.js'
+  ],
+  'sqliteDataModel': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.mk.tables.sqlite.min.js',
+    '/lib/js/jquery.mk.tables.sqlite.js'
+  ],
+  'date_time': [
+//    'http://www.bayern-surf.de/krocka/cdn/lib/js/date_time.min.js',
+    '/lib/js/date_time.js'
+  ],
+  'user_load': [
+//    'http://www.bayern-surf.de/krocka/cdn/turnen/js/log_sqlite.min.js',
+    'js/log_sqlite.js'
+  ],
+  'index': [
+//    'http://www.bayern-surf.de/krocka/cdn/turnen/js/index.min.js',
+    'js/index.js'
+  ]
+};
+function load(){
+  if(location.href.substr(-1) == "#"){
+    for(var o in oFallback){
+      oFallback[o].reverse();
+    }
+  }
+  fallback.load(
+    oFallback,
+    {
+      shim: {
+      'jQuery.ui':                     ['jQuery'],
+      'jQuery.datepicker.regional.de': ['jQuery.ui'],
+      'jQuery().stickyTableHeaders':   ['jQuery'],
+      'jQuery.cookie':                 ['jQuery'],
+      'jQuery.printf':                 ['jQuery.ui'],
+      'jQuery.md5':                    ['jQuery'],
+      'jQuery().mousewheel':           ['jQuery'],
+      'jQuery().tree':                 ['jQuery.ui'],
+      'jQuery().tables':               ['jQuery.ui'],
+      'sqliteDataModel':               ['jQuery'],
+      'set_lang':                      ['jQuery'],
+      'user_load':                     ['jQuery'],
+      'date_time':                     ['jQuery','jQuery.printf'],
+      'index':                         ['jQuery.ui','jQuery.cookie',
+                                        'set_lang','user_load','date_time']
+      }
+    }
+  );
+  fallback.ready(function(){
+    start();
+  });
+}
+</script>
+<body onload="load()" style="width:100%;height:100%">
+  <table style="width:100%;height:100%;font-size:5em">
+    <tr>
+      <td style="text-align:center;vertical-align:middle" id="id_Cnt">
+        <i class="fa fa-spinner fa-spin"></i>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

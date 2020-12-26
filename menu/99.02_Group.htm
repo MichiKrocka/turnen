@@ -1,0 +1,314 @@
+<style type="text/css">
+<!--
+#id_Grp {
+  width:100%;
+  height:auto;
+  overflow:auto;
+}
+#id_Grp .mk-content-right,
+#id_Grp .mk-search,
+#id_Grp .mk-header {
+  border:0;
+}
+#id_Grp .mk-footer {
+  border-right-width:0;
+  border-bottom-width:0;
+}
+-->
+</style>
+<script language="JavaScript" type="text/javascript">
+// #####################################################################
+jQuery(function($){
+  // -------------------------------------------------------------------
+  var $T,
+      slfMenuFile = oUser.menu;
+  // -------------------------------------------------------------------
+  make();
+  // -------------------------------------------------------------------
+  function selectMenu(ui){
+    var oldMenuFile  = $(ui.oldMenu).data("menu"),
+        newMenuFile  = $(ui.newMenu).data("menu");
+
+    if(DEBUG > 2 && newMenuFile != slfMenuFile){
+      var div_menu = $("#id_Content>div").filter('[data-menu="'+oldMenuFile+'"]');
+      $.Topic("selectMenu").unsubscribe(selectMenu);
+      $.Topic("logout").unsubscribe(saveOption);
+      $T.tables("destroy");
+      div_menu.detach();
+      return
+    }
+
+    if(newMenuFile == slfMenuFile){
+      goTo();
+      $.Topic("logout").subscribe(saveOption);
+      if(typeof $T != "undefined")
+        $T
+        .tables("refresh")
+        .focus();
+    } else if(oldMenuFile == slfMenuFile){
+      saveOption();
+      $.Topic("logout").unsubscribe(saveOption);
+    }
+  }
+  // -------------------------------------------------------------------
+  function saveOption(){
+    $T.tables("saveOption").focus();
+  }
+  // -------------------------------------------------------------------
+  function make(){
+    $.Topic("selectMenu").subscribe(selectMenu);
+    $.Topic("logout").subscribe(saveOption);
+    $T = $("#id_Grp").tables({
+      colModel: [{
+        indx:   "grp",
+        title:  "Group",
+        show:    true,
+        search:  true,
+        align:  "left",
+        width:  "10em"
+      },{
+        indx:   "note",
+        title:  "Note",
+        show:    true,
+        search:  true,
+        align:  "left",
+        width:  "40em"
+      }],
+      dataModel: $.extend({}, sqliteDataModel),
+      alignTitle: "center",
+      Left:       1,
+      Header:     null,
+      Footer:     null,
+      Icons:      '<button data-choice="USERS">'+_("Users")+'&hellip;</button>',
+      ID:         "id",
+      recId:      0,
+
+      User:       oUser.dbuser, // dbuser
+      Sign:       SIGN_GRP,     // navig identification
+
+      SQL_SysBase:  SQL_SYS_BASE,
+      SQL_SysTable: SQL_SYS_TABLE,
+      SQL_Base:     SQL_SYS_BASE,
+      SQL_Table:    SQL_SYS_GRP,
+      SQL_Query:    "SELECT * FROM "+SQL_SYS_GRP,
+
+      // functions + events
+      i18n: _,
+      cellDblClk: function(ev, ui){
+        console.log("cellDblClk", ev, ui);
+      },
+      beforeEdit: function(ev, ui){
+        $("button", ui.form).button("enable");
+      },
+      closeEdit: function(ev, ui){
+        $("button", ui.form).button("disable");
+      },
+      build: goTo,
+      clickButton: function(ev, ui){
+        switch(ui.choice){
+          case "ACCESS":
+            access($("input[name=access]", "#id_Grp_Form").eq(0));
+            break;
+          case "USERS":
+            GOTO_USERS_FILT = 'grp="'+$("input[name=grp]", $T).val()+'"';
+            $("#id_Menu")
+            .tree("open", $("input[data-menu='99.01_User.htm']", "#id_Menu"));
+            break;
+          default:
+            console.log(ui.choice);
+            break;
+        }
+      }
+    });
+    setTimeout(function(){
+      $T.focus();
+    }, 1000);
+  }
+  // -------------------------------------------------------------------
+  function goTo(){
+    change_all_lang($T);
+    if(GOTO_GROUP_FILT !== null){
+      setTimeout(function(){
+        $T.tables("option", {
+          filt: GOTO_GROUP_FILT,
+          filtSw: true
+        });
+        $T.tables("refresh");
+        GOTO_GROUP_FILT = null;
+      }, 100);
+    }
+  }
+  // -------------------------------------------------------------------
+  function access($accessEelement){
+    var Access   = $accessEelement.val(),
+        MenuItem = null;
+    if(Access == "")
+      Access = {};
+    else
+      Access = $.parseJSON(Access);
+    var $dialogElement = $('<div></div>')
+    .html(
+      '<div class="tree ui-widget-content ui-corner-all ui-resizable" style="float:left;height:30em;width:20em;margin-right:1em"></div>'+
+      '<div class="form ui-widget-content ui-corner-all" style="float:left">'+
+        '<input name="acc" id="id_acc" type="checkbox">'+
+        '<label for="id_acc">'+_("Access")+'</label>'+
+        '<br>'+
+        '<input name="edt" id="id_edt" type="checkbox">'+
+        '<label for="id_edt">'+_("Edit")+'</label>'+
+        '<br>'+
+        '<input name="ins" id="id_ins" type="checkbox">'+
+        '<label for="id_ins">'+_("Insert")+'</label>'+
+        '<br>'+
+        '<input name="del" id="id_del" type="checkbox">'+
+        '<label for="id_del">'+_("Delete")+'</label>'+
+        '<br>'+
+        '<input name="rep" id="id_rep" type="checkbox">'+
+        '<label for="id_rep">'+_("Report")+'</label>'+
+      '</div>'+
+      ''
+    )
+    .dialog({
+      resizable: false,
+      height:   "auto",
+      width:    "auto",
+      title:    _("Access rights"),
+      modal:    true,
+      buttons:  [{
+        text: _("OK"),
+        class: "c_OK",
+        click: function(){
+          $accessEelement.val(JSON.stringify(Access));
+          $(this).dialog("close")
+        }
+      },{
+        text: _("Cancel"),
+        click: function(){
+          $(this).dialog("close")
+        }
+      }],
+      open: function(){
+      },
+      close: function(){
+        $accessEelement.val(JSON.stringify(Access));
+        $(this).dialog("destroy");
+      }
+    }).on("keydown", function(ev){
+      if(ev.keyCode == $.ui.keyCode.ENTER && ev.ctrlKey){
+        var OK = $("button.c_OK", $(this).dialog("widget"));
+        OK.click();
+        return false;
+      }
+    });
+    // checkboxes
+    $('div.form input[type=checkbox]', $dialogElement).change(function(ev){
+      Access[MenuItem][this.name] = this.checked;
+    });
+    // tree
+    $('div.tree', $dialogElement)
+    .tree({
+      space: "Access",
+      top:
+        '<div style="-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box;font-size:0.8em;text-align:left;width:100%;border-top-width:0;border-left-width:0;border-right-width:0;padding:0.2em;border-bottom-width:1px" class="ui-widget ui-widget-header ui-corner-top">'+
+          '<button class="icon lang-title" title="Refresh" data-choice="REFRESH">'+
+            '<i class="fa fa-refresh"></i>'+
+          '</button>'+
+          '<button class="icon lang-title" title="Open" data-choice="OPEN_CLOSE">'+
+            '<i class="fa fa-folder"></i>'+
+          '</button>'+
+        '</div>'+
+        '',
+      labelFun: function(x){
+        return x.replace(/[^_]*_/, "").replace(/[.][^.]*$/, "");
+      },
+      data: function(options, callBack){
+        menu_make({}, callBack);
+      },
+      chck: false,
+      render: function(ev, ui){
+        var self = this;
+        // top button open/close menus
+        $("button", ui.element)
+        .button()
+        .off("click")
+        .on("click", function(ev){
+          var c = $(this).data("choice");
+          switch(c){
+            case "OPEN_CLOSE":
+              if($("i", this).hasClass("fa-folder-open")){
+                $(this).prop("title", _("Open"));
+                $("i", this)
+                  .removeClass("fa-folder-open")
+                  .addClass("fa-folder");
+                $(self).tree("close");
+              } else {
+                $(this).prop("title", _("Close"));
+                $("i", this)
+                  .removeClass("fa-folder")
+                  .addClass("fa-folder-open");
+                $(self).tree("open");
+              }
+              break;
+            case "REFRESH":
+              $(self).tree('refresh');
+              break;
+          }
+        });
+        // resizable
+        $(ui.element)
+        .resizable({
+          handles: "e",
+          stop: function(ev, ui){
+          }
+        });
+        MenuItem = $("input[data-menu='"+
+          $("input", ui.element).eq(0).data().menu+
+          "']", ui.element);
+        $(ui.element)
+        .tree("open", MenuItem);
+      },
+      select: change_menu
+    });
+    // .................................................................
+    function change_menu(ev, ui){
+      var oldMenuFile = $(ui.oldMenu).data("menu"),
+          newMenuFile = $(ui.newMenu).data("menu");
+      MenuItem = newMenuFile;
+      if(typeof Access[newMenuFile] == "undefined")
+        Access[newMenuFile] = $.extend({}, ACCESS_DEFAULT);
+      for(var x in Access[newMenuFile])
+        $("input[name="+x+"]" , $dialogElement[0])
+        .prop("checked", Access[newMenuFile][x]);
+    }
+  }
+  // -------------------------------------------------------------------
+});
+// #####################################################################
+</script>
+<div id="id_Grp" tabindex="1" style="display:none">
+  <form id="id_Grp_Form" style="display:block" class="mk-tables-form">
+    <input type="hidden" name="access" class="upd">
+    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px;display:none">
+    <table id="id_Grp_Table" tabindex="2">
+      <tbody>
+        <tr>
+          <td class="ui-widget-header lang">Group</td>
+          <td class="ui-widget-content"><input type="text" name="grp" style="width:20em" class="upd"></td>
+          <td class="ui-widget-header lang" style="width:90%;text-align:left">Note</td>
+          <td class="ui-widget-content ui-state-disabled" style="width:1%">
+            <input name="id" style="width:4em;text-align:center;background:transparent" type="text" disabled>
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header" colspan="2"></td>
+          <td class="ui-widget-content" colspan="2">
+            <textarea name="note" style="min-height:5em" class="upd"></textarea>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="float:right;padding:6px">
+      <button title="Access rights" data-choice="ACCESS" class="lang lang-title" disabled>Access rights</button>
+    </div>
+  </form>
+</div>
+

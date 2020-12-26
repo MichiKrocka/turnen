@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html style="width:100%;height:100%">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=EDGE">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+  <title class="lang">Report</title>
+</head>
+<style type="text/css" id="css">
+<!--
+html, body {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  height:100%;
+  width:100%;
+  margin:0;
+  padding:0;
+  border:0;
+}
+@media print {
+  html,body {
+    width: 99%;
+    padding:2px;
+  }
+  #cnt {
+    width: 210mm;
+  }
+}
+body {
+  font-size:16px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  cursor: pointer;
+}
+.headerSortUp {
+  text-decoration:overline;
+}
+.headerSortDown {
+  text-decoration:underline;
+}
+-->
+</style>
+<script async type="text/javascript" src="/lib/js/fallback.min.js"></script>
+<script type="text/javascript">
+function load(){
+  fallback.load({
+    // css
+    'css_ui': [
+      'https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.min.css',
+      'themes/base/jquery-ui.min.css'
+    ],
+    'css_awesome': [
+      'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css',
+      'https://use.fontawesome.com/568396c591.js',
+      '/lib/css/font-awesome.min.css'
+    ],
+    // js
+    'jQuery': [
+      'https://code.jquery.com/jquery-3.1.1.min.js',
+      '/lib/js/jquery.min.js'
+    ],
+    'jQuery.ui': [
+      'https://code.jquery.com/ui/1.12.1/jquery-ui.min.js',
+      '/lib/js/jquery-ui.min.js'
+    ],
+    'set_lang': [
+      'http://www.bayern-surf.de/krocka/cdn/lib/js/locale.min.js',
+      '/lib/js/locale.js'
+    ],
+    'jQuery.printf': [
+      'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.printf.min.js',
+      '/lib/js/jquery.printf.min.js'
+    ],
+    'jQuery.tablesorter': [
+      '/lib/js/jquery.tablesorter.min.js'
+    ]
+  }, {
+    shim: {
+      'jQuery.ui':                     ['jQuery'],
+      'jQuery.printf':                 ['jQuery.ui'],
+      'jQuery.tablesorter':            ['jQuery'],
+      'set_lang':                      ['jQuery']
+    },
+    callback: function(s, f){
+      start();
+    }
+  });
+}
+// -----------------------------------------------------------------
+var oReport    = {},
+    TIME_WAIT  = 3000,
+    T_SCROLL   = 10000, //seconds
+    FS0,
+    FS,
+    xLoad      = false,
+    xRender    = false,
+    xRun       = false;
+// ---------------------------------------------------------------------
+function start(){
+  DIR_LANG      = opener.DIR_LANG;
+  SQL_BASE_DIR  = opener.SQL_BASE_DIR;
+  SQL_SYS_BASE  = opener.SQL_SYS_BASE;
+  SQL_COMP_BASE = opener.SQL_COMP_BASE;
+  CompBase      = SQL_COMP_BASE + opener.CompBase;
+  oReport = $.extend(true, opener.val);
+  FS0 = parseInt($("body").css("font-size"));
+  FS  = parseInt(FS0 / 10);
+  DEFAULT_LANG  = get_lang();
+  set_lang(DEFAULT_LANG);
+  $("body").keyup(function(ev){
+    var K = ev.which | ev.shiftKey<<8 | ev.ctrlKey<<9  | ev.altKey<<10;
+    switch(K){
+      case 1195:  // Alt +
+        var fs = parseInt($("body").css("font-size"));
+        fs += FS;
+        $("body").css("font-size", fs+"px");
+        break;
+      case 1197:  // Alt -
+        var fs = parseInt($("body").css("font-size"));
+        fs -= FS;
+        $("body").css("font-size", fs+"px");
+        break;
+      case 1072:  // Alt 0
+        $("body").css("font-size", FS0+"px");
+        break;
+      case 1106:  // Alt R
+        message("OK", function(){
+          if(oReport.options.Sign == opener.val.options.Sign);
+            oReport = $.extend(true, opener.val);
+          //xRun = true;
+          $("html, body")
+          .stop(true, true)
+          .clearQueue();
+          xRun = false;
+          data_load();
+        });
+        break;
+      case 1064:  // Alt DOWN
+        message("OK");
+        if(!xRun){
+          xRun = true;
+          start_scroll();
+        } else {
+          xRun = false;
+          $("html, body")
+          .stop(true, true)
+          .clearQueue();
+        }
+        break;
+      case 1101:  // Alt M
+        menu();
+        break;
+      case 283:   // Sift ESC
+        window.close();
+      default:
+        //console.log(K);
+        //window.opener.console.log("list", K);
+        return;
+    }
+    ev.preventDefault();
+    return false;
+  });
+  data_load();
+};
+// ---------------------------------------------------------------------
+function message(msg, callBack, timeOut){
+  $('<div><p style="text-align:center">'+msg+'</p></div>')
+  .dialog({
+    modal:false,
+    open: function(){
+      var self = this;
+      if(typeof timeOut == "undefined")
+        timeOut = 500;
+      if(timeOut > 0)
+        setTimeout(function(){
+          $(self).dialog('close');
+        }, timeOut);
+    },
+    close: function(){
+      if(callBack)
+        callBack();
+    }
+  });
+}
+// ---------------------------------------------------------------------
+function start_scroll(){
+  var H = $(document).height() - $(window).height(),
+      V = parseInt(1000 * $(window).height() / T_SCROLL),
+      T = ((H - $(window).scrollTop()) / V) * 1000;
+  $("html, body")
+  .delay(TIME_WAIT)
+  .animate({scrollTop: H}, T, "linear")
+  .delay(TIME_WAIT)
+  .queue(function(){
+    $(this).dequeue();
+    if(oReport.options.Sign == opener.val.options.Sign);
+      oReport = $.extend(true, opener.val);
+    if(xRun)
+      data_load();
+  });
+}
+// ---------------------------------------------------------------------
+function data_load(){
+  if(xLoad)
+    return;
+  xLoad = true;
+  user_render = null;
+  $("body")
+  .html(oReport.ext);
+  oReport.options.dataModel._exec(
+    "REPORT_TEST", {
+      options: oReport.options,
+      object: oReport.object,
+      test: false,
+      val: oReport.val.trim()
+    },
+    function (D){
+      xLoad = false;
+      if($.isFunction(user_render))
+        user_render(D);
+      else
+        data_render(D);
+    }
+  );
+}
+// ---------------------------------------------------------------------
+function data_render(D){
+  D = D.REPORT_TEST;
+  var TH  = [],
+      TB  = [],
+      aTH = [];
+
+  if(xRender){
+    if(xRun){
+      start_scroll();
+      message(_("Wait"));
+    }
+    return;
+  }
+
+  if($("body").html() != ""){
+    $("table thead th", "body").each(function(ix){
+      if($(this).hasClass("headerSortUp"))
+        aTH.push([ix, 1]);
+      else if($(this).hasClass("headerSortDown"))
+        aTH.push([ix, 0]);
+    });
+  }
+  if(typeof render != "undefined" && $.isFunction(render) && render(D))
+    return;
+  for(var i in D){
+    var TR = [];
+    for(var x in D[i]){
+      if(TB.length == 0)
+        TH.push($.sprintf('<th class="%s">%s</th>', x, x));
+      TR.push($.sprintf('<td class="%s">%s</td>', x, D[i][x]));
+    }
+    TB.push('<tr>'+TR.join("")+'</tr>');
+  }
+  $("body")
+  .append(
+    '<table>'+
+      '<thead>'+TH.join("")+'</thead>'+
+      '<tfoot>'+TH.join("")+'</tfoot>'+
+      '<tbody>'+TB.join("")+'</tbody>'+
+    '</table>'
+  );
+  $("thead th,tfoot th", "body")
+  .addClass("ui-widget-header");
+  $("tbody td", "body")
+  .addClass("ui-widget-content");
+  $("table", "body").tablesorter({
+    widgets:  ['zebra'],
+    sortList: aTH,
+    debug:    false
+  });
+  $(window).scrollTop(0);
+  if(xRun){
+    start_scroll();
+    message("Warten");
+  }
+}
+// ---------------------------------------------------------------------
+</script>
+<body onload="load()" style="width:100%;height:100%">
+  <table style="width:100%;height:100%;font-size:5em">
+    <tr>
+      <td style="text-align:center;vertical-align:middle" id="id_Start">0</td>
+    </tr>
+  </table>
+</body>
+</html>

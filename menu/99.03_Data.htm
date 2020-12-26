@@ -1,0 +1,291 @@
+<style type="text/css">
+<!--
+#id_Data {
+  width:100%;
+  height:auto;
+  overflow:auto;
+}
+#id_Data .pq-grid-bottom {
+  border-radius:0;
+}
+#id_Data li.ui-menu-item ul,
+#id_Data li.ui-menu-item li {
+  width:auto;
+  ooverflow:hidden;
+}
+
+#id_Data_Table td.ui-widget-header {
+  width:1% !important;
+}
+#id_Data_Table td.ui-widget-content {
+  width:49% !important;
+}
+#id_Data_Form textarea {
+  width:100%;
+  height:5em;
+}
+.ui-autocomplete {
+  max-height: 70px;
+  height: 70px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: absolute;
+  cursor: default;
+  z-index:1000 !important;
+}
+-->
+</style>
+<div id="id_Data" tabindex="1">
+  <span style="visibility:hidden">
+  <form id="id_Data_Form" style="display:block" class="mk-tables-form">
+    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px;display:none">
+    <table id="id_Data_Table" tabindex="2">
+      <tbody></tbody>
+    </table>
+  </form>
+  </span>
+</div>
+<script language="JavaScript" type="text/javascript">
+// #####################################################################
+jQuery(function($){
+  // -------------------------------------------------------------------
+  var $T,
+      data = {
+        db: SQL_SYS_BASE,
+        tb: "zeiterfassung"
+      },
+      slfMenuFile = oUser.menu;
+  make();
+  // -------------------------------------------------------------------
+  // event handler for menu changed
+  function selectMenu(ui){
+    var oldMenuFile  = $(ui.oldMenu).data("menu"),
+        newMenuFile  = $(ui.newMenu).data("menu");
+
+    if(DEBUG > 0 && newMenuFile != slfMenuFile){
+      div_menu = $("#id_Content>div").filter('[data-menu="'+oldMenuFile+'"]');
+      $.Topic("selectMenu").unsubscribe(selectMenu);
+      $.Topic("logout").unsubscribe(saveOption);
+      $T.tables("destroy");
+      div_menu.detach();
+      return
+    }
+
+    if(newMenuFile == slfMenuFile){
+      $.Topic("logout").subscribe(saveOption);
+      if(typeof $T != "undefined")
+        $T
+        .tables("refresh")
+        .focus();
+    } else if(oldMenuFile == slfMenuFile){
+      saveOption();
+      $.Topic("logout").unsubscribe(saveOption);
+    }
+  }
+  // -------------------------------------------------------------------
+  // save options of table grid
+  function saveOption(){
+    $T.tables("saveOption");
+  }
+  // -------------------------------------------------------------------
+  function make(){
+    make_colModel(make_grid);
+    // subscribe events
+    $.Topic("selectMenu").subscribe(selectMenu);
+    $.Topic("logout").subscribe(saveOption);
+    setTimeout(function(){
+      $("button[data-choice=CHANGE]").click();
+    }, 1000);
+  }
+  // -------------------------------------------------------------------
+  function make_menu(ui){
+    var li = [
+          '<li data-choice="CANCEL"><div>'+_("Cancel")+'</div></li>',
+          '<li class=""></li>'],
+        o = {};
+    make_menu_sys();
+    // .................................................................
+    // system tables
+    function make_menu_sys(){
+      o = {
+        base: SQL_SYS_BASE,
+        cmd:  [{
+          sgn:   "MENU_SYS",
+          query: "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+          para: []
+        }]
+      };
+      o.cmd = JSON.stringify(o.cmd);
+      $.post("/sql", o, function(D){
+        D = D.MENU_SYS;
+        if(D.length){
+          DefaultTab = {tb: D[0].name, db: SQL_SYS_BASE};
+        }
+        for(var i in D){
+          li.push(
+            '<li data-tb="'+D[i].name+'" data-db="'+SQL_SYS_BASE+'"><div>'+
+            D[i].name+
+            '</div></li>'
+          );
+        }
+        make_ul();
+      });
+    }
+    // .................................................................
+    // make ul menu
+    function make_ul(){
+      var self = ui.element,
+          el = ui.button,
+          $menu = $('ul.mk-tables-menu', self.element);
+      if(!$menu.is(":hidden")){
+        $(this)
+        .menu("destroy")
+        .hide();
+        self._overlay(false);
+        self.element.focus();
+        return false;
+      }
+      self._overlay(true);
+      $menu
+      .html(li.join(""))
+      .show()
+      .position({
+        my: "left top",
+        at: "left bottom",
+        of: el
+      })
+      .menu({
+        select: function(ev, uis){
+          var c = $(uis.item).data("choice");
+          switch(c){
+            case "CANCEL":
+              break;
+            default:
+              data = $(uis.item).data();
+              make_colModel(function(colModel){
+                $T
+                .tables("option", {
+                  recId:     null,
+                  rowIx:     0,
+                  orderBy:   "id",
+                  orderType: "DESC",
+                  colModel:  colModel,
+                  SQL_Base:  data.db,
+                  SQL_Table: data.tb,
+                  SQL_Query: "SELECT * FROM " + data.tb
+                })
+                .tables("destroy");
+                make_grid(colModel);
+              });
+          }
+          $(this).menu("option", "close")();
+        },
+        close: function(){
+          $menu
+          .off()
+          .menu("destroy")
+          .hide();
+          self._overlay(false);
+          self.element.focus();
+        }
+      })
+      .focus()
+      .on("keydown", function(ev){
+        if(ev.which == $.ui.keyCode.ESCAPE){
+          $menu.menu("option", "close")();
+        }
+        ev.preventDefault();
+        return false;
+      });
+      $($menu).on("mousewheel",  wheel);
+      $("ul", $menu).on("mousewheel",  wheel);
+      // mousewheel
+      function wheel(ev){
+        var dY = ev.originalEvent.deltaY;
+        $(this).scrollTop($(this).scrollTop() + 4 * dY);
+        return false;
+      }
+    }
+  }
+  // -------------------------------------------------------------------
+  function make_grid(colModel){
+    // table  grid
+    $T = $("#id_Data").tables({
+      colModel:    colModel,
+      dataModel:   $.extend(true, {}, sqliteDataModel),
+      accessModel: oAccess[slfMenuFile],
+      alignTitle:  "center",
+      Rows:      15,
+      Left:      0,
+      Header:    null,
+      Footer:    null,
+      Icons:     '<button data-choice="CHANGE">'+data.tb+'</button>',
+      ID:        "id",
+
+      User:         oUser.dbuser, // dbuser
+      Sign:         SIGN_DATA,    // navig identification
+
+      SQL_SysBase:  SQL_SYS_BASE,
+      SQL_SysTable: SQL_SYS_TABLE,
+
+      SQL_Base:     data.db,
+      SQL_Table:    data.tb,
+      SQL_Query:    "SELECT * FROM " + data.tb,
+
+      // functions + events
+      i18n:         function(x){return(x)},
+      build: function(ev, ui){
+        change_all_lang(this);
+      },
+      clickButton: function(ev, ui){
+        make_menu(ui);
+      }
+    });
+  }
+  // -------------------------------------------------------------------
+  function make_colModel(callBack){
+    var o = {
+      base: data.db,
+      cmd:  [{
+        sgn:   "COLS",
+        query: "PRAGMA table_info("+data.tb+")",
+        para: []
+      }]
+    };
+    o.cmd = JSON.stringify(o.cmd);
+    $.post("/sql", o, function(D){
+      D = D.COLS;
+      var colModel = [];
+          tr = [],
+          iC = 0;
+      for(var i in D){
+        if(D[i].type == "BLOB")
+          continue;
+        // colModel
+        colModel.push({
+          indx:   D[i].name,
+          title:  D[i].name,
+          show:   true,
+          search: true,
+          align:  "left",
+          width:  "7em"
+        });
+        // form
+        if(!(iC % 2))
+          tr.push('</tr><tr>');
+        tr.push($.sprintf(
+          '<td class="ui-widget-header">%s</td>'+
+          '<td class="ui-widget-content"><textarea name="%s" class="upd"></textarea></td>',
+          D[i].name, D[i].name
+        ));
+        iC++;
+      }
+      if(!(iC % 2))
+        tr.push('<td colspan="2" class="ui-widget-header"></td>');
+      $("tbody", "#id_Data_Table").html('<tr>'+tr.join("")+'</tr>');
+      callBack(colModel);
+    });
+  }
+  // -------------------------------------------------------------------
+});
+</script>

@@ -1,0 +1,369 @@
+<style type="text/css">
+<!--
+#id_TimeReg {
+  width:100%;
+  height:auto;
+  overflow:auto;
+}
+#id_TimeReg .mk-content-right,
+#id_TimeReg .mk-search,
+#id_TimeReg .mk-header {
+  border:0;
+}
+#id_TimeReg .mk-footer {
+  border-right-width:0;
+  border-bottom-width:0;
+}
+-->
+</style>
+<script>
+jQuery(function($){
+  // -------------------------------------------------------------------
+  var $T,
+      slfMenuFile = oUser.menu,
+      Names = {};
+  // -------------------------------------------------------------------
+  make();
+  // -------------------------------------------------------------------
+  function selectMenu(ui){
+    var oldMenuFile  = $(ui.oldMenu).data("menu"),
+        newMenuFile  = $(ui.newMenu).data("menu");
+
+    if(DEBUG > 0 && newMenuFile != slfMenuFile){
+      saveOption();
+      var div_menu = $("#id_Content>div").filter('[data-menu="'+oldMenuFile+'"]');
+      $.Topic("selectMenu").unsubscribe(selectMenu);
+      $.Topic("logout").unsubscribe(saveOption);
+      if(typeof $T != "undefined")
+        $T.tables("destroy");
+      div_menu.detach();
+      return
+    }
+
+    if(newMenuFile == slfMenuFile){
+      if(typeof $T != "undefined"){
+        $T
+        .tables("refresh")
+        .focus();
+      }
+    } else if(oldMenuFile == slfMenuFile){
+      saveOption();
+      $.Topic("logout").unsubscribe(saveOption);
+    }
+  }
+  // -------------------------------------------------------------------
+  function saveOption(){
+    $T.tables("saveOption");
+  }
+  // -------------------------------------------------------------------
+  function make(){
+    $.Topic("selectMenu").subscribe(selectMenu);
+    $.Topic("logout").subscribe(saveOption);
+    if(oUser.grp == "User")
+      $(".admin-dis").prop("disabled", true);
+    if(oUser.grp == "User" || oUser.grp == "Admin")
+      $(".admin-hide").hide();
+    if(oUser.grp != "Admin")
+      $("input[name=dbuser],textarea[name=Notiz]", "#id_TimeReg_Form").data("default", oUser.dbuser);
+    $T = $("#id_TimeReg").tables({
+      colModel: [{
+        indx:   "zeiterfassung.X",
+        title:  "X",
+        show:   true,
+        search: true,
+        align:  "center",
+        width:  "2em"
+      },{
+        indx:   "zeiterfassung.Datum",
+        title:  "Datum",
+        show:   true,
+        search: true,
+        align:  "center",
+        width:  "8em",
+        render: function(ui){
+          var D = new Date(ui.rowData[ui.col]).getDay();
+          return ui.rowData[ui.col]+" / "+WOCHE[D];
+        }
+      },{
+        indx:   "substr(zeiterfassung.Von,0,6)||'-'||substr(zeiterfassung.Bis,0,6)",
+        title:  "Von-Bis",
+        show:   true,
+        search: true,
+        align:  "center",
+        width:  "7em"
+      },{
+        indx:   "zeiterfassung.Anzahl",
+        title:  "Anzahl",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "4em"
+      },{
+        indx:   "zeiterfassung.Sportart",
+        title:  "Sportart",
+        show:   true,
+        search: true,
+        align:  "left",
+        width:  "20em"
+      },{
+        indx:   "zeiterfassung.Ort",
+        title:  "Ort",
+        show:   true,
+        search: true,
+        align:  "left",
+        width:  "20em"
+      },{
+        indx:   "zeiterfassung.dbuser",
+        title:  "dbuser",
+        show:   true,
+        search: true,
+        align:  "left",
+        width:  "10em"
+      },{
+        indx:   "zeiterfassung.Notiz",
+        title:  "Notiz",
+        show:   false,
+        search: false,
+        align:  "left",
+        width:  "20em"
+      }],
+      dataModel: $.extend({}, sqliteDataModel),
+      alignTitle: "center",
+      orderBy:   "Datum",
+      orderType: "DESC",
+      Rows:      10,
+      Left:      2,
+      Header:    null,
+      Footer:    null,
+      ID:        "id",
+      Icons:     oUser.grp == "Admin" ? '<button data-choice="CONC">Abschluss</button>' : '',
+
+      User:         oUser.dbuser, // dbuser
+      Sign:         SIGN_TIME,    // navig identification
+
+      SQL_SysBase:  SQL_SYS_BASE,
+      SQL_SysTable: SQL_SYS_TABLE,
+      SQL_Base:     SQL_BASE_DIR + "turnen.sqlite",
+      SQL_Table:    "zeiterfassung",
+      SQL_Query:    "SELECT id,dbuser,Datum,substr(Von,0,6) AS Von,substr(Bis,0,6) AS Bis,Sportart,Anzahl,Ort,Notiz,X FROM zeiterfassung",
+      filtFix:      oUser.grp == "Admin" ? "" : "zeiterfassung.dbuser='"+oUser.dbuser+"'",
+      // functions + events
+      i18n:         __,
+      //refreshRec:   refreshRec,
+      clickButton: function(ev, ui){
+        if(ui.choice == "CONC")
+          conclusion();
+      },
+      beforeDelete: function(ev, ui){
+        if(oUser.grp == "Admin" || oUser.grp == "Superadmin")
+          return true;
+        // abgerechnet !
+        if(ui.REC[0].X == "x")
+          return false;
+        ui.filt.filtSw = false;
+        ui.filt = "";
+        ui.cont = {};
+        return true;
+      },
+      beforeEdit: function(ev, ui){
+      },
+      afterEdit: function(ev, ui){
+        var X = $("input[name=Von]", "#id_TimeReg_Form").val().split(":");
+        $("input[name=Von]", "#id_TimeReg_Form").val($.sprintf("%02i:%02i", X[0], X[1]));
+        var X = $("input[name=Bis]", "#id_TimeReg_Form").val().split(":");
+        $("input[name=Bis]", "#id_TimeReg_Form").val($.sprintf("%02i:%02i", X[0], X[1]));
+        return true;
+      },
+      closeEdit: function(ev, ui){
+        if(ui.cancel)
+          return;
+      },
+      build: function(ev, ui){
+        change_all_lang(this);
+      }
+    });
+    setTimeout(function(){
+      $T.focus();
+    }, 1000);
+    // -----------------------------------------------------------------
+  }
+  // -------------------------------------------------------------------
+  function conclusion(){
+    var D = new Date(),
+        $dialog = $("<div>");
+    $dialog
+    .html(
+      '<table>'+
+        '<tr>'+
+          '<td style="text-align:right">Jahr</td>'+
+          '<td>'+
+            '<input type="text" name="Y" value="'+D.getFullYear()+'" class="ui-widget-content">'+
+          '</td>'+
+        '</tr>'+
+        '<tr>'+
+          '<td style="text-align:right">Quartal</td>'+
+          '<td>'+
+            '<input type="text" name="Q" value="'+(parseInt(D.getMonth() / 3)+1)+'" class="ui-widget-content">'+
+          '</td>'+
+        '</tr>'+
+      '</table>'
+    );
+    $dialog
+    .dialog({
+      width: "auto",
+      height: "auto",
+      title: "Abschluss",
+      modal: true,
+      closeOnEscape: true,
+      resizable: false,
+      buttons: [{
+        text: _("OK"),
+        class: "c_OK",
+        click: function(){
+          var V = {},
+              $i = $("input[type=text]", this)
+              .filter(function() {
+                V[this.name] = this.value;
+                return !this.value;
+              });
+          if($i.length){
+            $i.eq(0).focus();
+            return;
+          }
+          conclusion_upd(V, this.filter);
+          $(this).dialog("close");
+        }
+      },{
+        text: _("Cancel"),
+        click: function(){
+          $(this).dialog("close");
+        }
+      }],
+      open: function(ev, ui){
+        var self = this;
+        $T.tables("filter", function(filter){
+          self.filter = filter;
+        });
+        var self = this;
+        setTimeout(function(){
+          $("input[type=text]:eq(0)", self).select();
+        }, 100);
+      },
+      close: function(ev, ui ){
+        $(this).dialog("destroy");
+      }
+    }).delegate("input[type=text]", "keydown", function(ev){
+      if(ev.keyCode == $.ui.keyCode.ENTER){
+        if(ev.ctrlKey){
+          var OK = $("button.c_OK", $dialog.dialog("widget"));
+          OK.click();
+        }
+        return false;
+      }
+    });
+  }
+  // -------------------------------------------------------------------
+  function conclusion_upd(V, filter){
+    var opt = $T.tables("option"),
+        Q = ""+
+      "INSERT INTO monat (X,Summe,dbuser,Abschluss,Datum,Schein)"+
+      "SELECT "+
+        "'o' AS X,"+
+        "CASE WHEN Datum < '2016-01-01' "+
+        "THEN "+
+          "SUM((strftime('%s', Bis) - strftime('%s', Von)) / 60 / 45) "+
+        "ELSE "+
+          "printf('%.1f', ROUND(SUM((strftime('%s', Bis) - strftime('%s', Von)) / 60 / 60.0) * 2 - 0.5) / 2) "+
+        "END AS Summe,"+
+        "dbuser,"+
+        "strftime('%Y-%m-01', Datum) AS Abschluss,"+
+        "strftime('%Y-%m-01', 'now') AS Datum,"+
+        "(SELECT certificate FROM sys_user WHERE sys_user.dbuser=zeiterfassung.dbuser) AS Schein "+
+      "FROM "+
+        "zeiterfassung "+
+        filter + " AND "+
+        "X = 'o' AND "+
+        "strftime('%Y', Datum)=? AND "+
+        "(strftime('%m', Datum) - 1) / 3 + 1 = CAST(? AS int) "+
+      "GROUP BY dbuser,strftime('%Y', Datum),strftime('%m', Datum)";
+    var o = {
+      base: SQL_BASE_DIR + "turnen.sqlite",
+      cmd:  [{
+        sgn:   "CONC",
+        query: Q,
+        para: [V.Y, V.Q]
+      },{
+        sgn:   "UPD",
+        query:
+          "UPDATE zeiterfassung "+
+          "SET X='x' "+
+          filter+
+          " AND X = 'o' AND strftime('%Y', Datum)=? AND (strftime('%m', Datum) - 1) / 3 + 1 = CAST(? AS int) ",
+        para: [V.Y, V.Q]
+      }]
+    };
+    o.cmd = JSON.stringify(o.cmd);
+    $.post("/sql", o, function(D){
+      var M =  [];
+      for(var x in D)
+        M.push(x+":"+D[x].changes);
+      aError.push(M.join(","));
+      $("button[data-choice='REFRESH']", $T).click();
+    });
+  }
+});
+</script>
+<div id="id_TimeReg" style="display:none" class="ui-corner-top">
+  <form id="id_TimeReg_Form" style="display:block" class="mk-tables-form">
+    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px;display:none">
+    <table id="id_TimeReg_Table" tabindex="2">
+        <tr>
+          <td class="ui-widget-header" style="width:1%">Datum</td>
+          <td class="ui-widget-content" style="width:1%">
+            <input name="Datum" class="datepicker upd" type="text" style="text-align:center;width:8em" tabindex="3">
+          </td>
+          <td class="ui-widget-header" style="width:1%">Von</td>
+          <td class="ui-widget-content" style="width:1%">
+            <input name="Von" class="upd" type="text" tabindex="4" style="width:4em;text-align:center">
+          </td>
+          <td class="ui-widget-header" style="width:1%">Bis</td>
+          <td class="ui-widget-content" style="width:1%">
+            <input name="Bis" class="upd" type="text" tabindex="5" style="width:4em;text-align:center">
+          </td>
+          <td class="ui-widget-header" style="width:1%">Anzahl</td>
+          <td class="ui-widget-content" style="width:1%">
+            <input name="Anzahl" class="upd" type="text" tabindex="6" style="width:4em;text-align:right">
+          </td>
+          <td class="ui-widget-header"></td>
+          <td class="ui-widget-content" style="width:1%">
+            <input name="dbuser" class="upd admin-dis" type="text" style="width:10em;text-align:center" tabindex="7">
+          </td>
+          <td class="ui-widget-content" style="width:1%">
+            <input data-enum='["o","x"]' type="button" name="X" class="enum admin-dis" style="background-color:transparent;width:100%" tabindex="8" data-default="o">
+          </td>
+          <td class="ui-widget-content ui-state-disabled" style="width:1%">
+            <input name="id" style="width:5em;text-align:center;background:transparent" type="text" disabled>
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Sportart</td>
+          <td class="ui-widget-content" colspan="11">
+            <input name="Sportart" class="upd" type="text" tabindex="9">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Ort</td>
+          <td class="ui-widget-content" colspan="11">
+            <input name="Ort" class="upd" type="text" tabindex="10">
+          </td>
+        </tr>
+        <tr class="admin-hide">
+          <td class="ui-widget-header" style="vertical-align:top">Notiz</td>
+          <td class="ui-widget-content" colspan="11" style="height:5em">
+            <textarea name="Notiz" class="upd" tabindex="11"></textarea>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>

@@ -1,0 +1,295 @@
+<style type="text/css">
+<!--
+#id_Test {
+  width:100%;
+  height:auto;
+  overflow:auto;
+}
+#id_Test .mk-content-right,
+#id_Test .mk-search,
+#id_Test .mk-header {
+  border:0;
+}
+#id_Test .mk-footer {
+  border-right-width:0;
+  border-bottom-width:0;
+}
+-->
+</style>
+<script>
+jQuery(function($){
+  // -------------------------------------------------------------------
+  var $T,
+      slfMenuFile = oUser.menu;
+  // -------------------------------------------------------------------
+  make();
+  // -------------------------------------------------------------------
+  function selectMenu(ui){
+    var oldMenuFile  = $(ui.oldMenu).data("menu"),
+        newMenuFile  = $(ui.newMenu).data("menu");
+
+    if(DEBUG > 0 && newMenuFile != slfMenuFile){
+      saveOption();
+      var div_menu = $("#id_Content>div").filter('[data-menu="'+oldMenuFile+'"]');
+      $.Topic("selectMenu").unsubscribe(selectMenu);
+      $.Topic("logout").unsubscribe(saveOption);
+      if(typeof $T != "undefined")
+        $T.tables("destroy");
+      div_menu.detach();
+      return
+    }
+
+    if(newMenuFile == slfMenuFile){
+      $.Topic("logout").subscribe(saveOption);
+      if(typeof $T != "undefined")
+        $T
+        .tables("refresh")
+        .focus();
+    } else if(oldMenuFile == slfMenuFile){
+      saveOption();
+      $.Topic("logout").unsubscribe(saveOption);
+    }
+  }
+  // -------------------------------------------------------------------
+  function saveOption(){
+    $T.tables("saveOption");
+  }
+  // -------------------------------------------------------------------
+  function make(){
+    $.Topic("selectMenu").subscribe(selectMenu);
+    $.Topic("logout").subscribe(saveOption);
+    if(typeof window.GYM_MID == "undefined" || !window.GYM_MID){
+      $("#id_Menu")
+      .tree("open", $("input[data-menu='04_Michis.htm']", "#id_Menu"));
+      return;
+    }  
+    $T = $("#id_Test").tables({
+      colModel: [{
+        indx:   "Datum",
+        title:  "Datum",
+        show:   true,
+        search:  true,
+        align:  "center",
+        width:  "6em"
+      },{
+        indx:   "Mitte",
+        title:  "Mitte",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Rechts",
+        title:  "Rechts",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Links",
+        title:  "Links",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Graetsche",
+        title:  "Grätsche",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Sitz",
+        title:  "Sitz",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Bruecke",
+        title:  "Brücke",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Beugestuetze",
+        title:  "Stütze",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Klimmzuege",
+        title:  "Züge",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Bauch",
+        title:  "Bauch",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Lauf",
+        title:  "Lauf",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Seil",
+        title:  "Seil",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "4em"
+      },{
+        indx:   "ROUND((Mitte+Rechts+Links+Graetsche+Sitz+Bruecke)/6,2)",
+        title:  "Dähnung",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Beugestuetze+Klimmzuege+Bauch",
+        title:  "Kraft",
+        show:   true,
+        search: true,
+        align:  "right",
+        width:  "3em"
+      },{
+        indx:   "Notiz",
+        title:  "Notiz",
+        show:   true,
+        search: true,
+        align:  "left",
+        width:  "20em"
+      }],
+      dataModel: $.extend({}, sqliteDataModel),
+      alignTitle: "center",
+      Rows:      10,
+      Left:      1,
+      Header:    null,
+      Footer:    null,
+      ID:        "id",
+
+      User:         oUser.dbuser, // dbuser
+      Sign:         SIGN_GYMTEST, // navig identification
+
+      SQL_SysBase:  SQL_SYS_BASE,
+      SQL_SysTable: SQL_SYS_TABLE,
+      SQL_Base:     SQL_BASE_DIR + "turnen.sqlite",
+      SQL_Table:    "GymTest",
+      SQL_Query:    "SELECT *,ROUND((Mitte+Rechts+Links+Graetsche+Sitz+Bruecke)/6,2) AS D,Beugestuetze+Klimmzuege+Bauch AS K,(SELECT CASE WHEN Nachname<>'' THEN Nachname||' ' ELSE '' END||Vorname FROM GymName WHERE GymName.id=mid) AS Name FROM GymTest",
+      filtFix:      "mid="+window.GYM_MID,
+      // functions + events
+      i18n:         __,
+      build: function(ev, ui){
+        change_all_lang(this);
+        $("input[name=mid]", $T).data("default", window.GYM_MID);
+      }
+    });
+    setTimeout(function(){
+      $T.focus();
+    }, 1000);
+  }
+  // -------------------------------------------------------------------
+});
+</script>
+<div id="id_Test" style="display:none" class="ui-corner-top">
+  <form id="id_Test_Form" style="display:block" class="mk-tables-form">
+    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px;display:none">
+    <input type="hidde" name="mid" value="" class="upd">
+    <table id="id_Test_Table" tabindex="2">
+      <tbody>
+        <tr>
+          <td class="ui-widget-content ui-state-disabled" style="width:1%">
+            <input name="id" style="width:100%;text-align:center;background:transparent" type="text" disabled>
+          </td>
+          <td class="ui-widget-content" colspan="3">
+            <input name="Datum" class="datepicker upd" type="text" style="text-align:center" tabindex="3">
+          </td>
+          <td class="ui-widget-content ui-state-disabled" style="width:1%">
+            <input name="Name" style="width:20em;text-align:center;background:transparent" type="text" disabled>
+          </td>
+          <td class="ui-widget-header" style="width:99%;text-align:right">Notiz</td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header" style="width:1%">Mitte</td>
+          <td class="ui-widget-content" style="width:1%">
+            <input name="Mitte" class="upd" style="width:3em;text-align:right" type="text" tabindex="4">
+          </td>
+          <td class="ui-widget-header" style="width:1%">Stütze</td>
+          <td class="ui-widget-content" style="width:1%">
+            <input name="Beugestuetze" class="upd" style="width:4em;text-align:right" type="text" tabindex="10">
+          </td>
+          <td class="ui-widget-content" rowspan="7" colspan="3" style="padding:0">
+            <textarea name="Notiz" tabindex="15" class="upd"></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Rechts</td>
+          <td class="ui-widget-content">
+            <input name="Rechts" class="upd" style="width:3em;text-align:right" type="text" tabindex="5">
+          </td>
+          <td class="ui-widget-header">Klimmzüge</td>
+          <td class="ui-widget-content">
+            <input name="Klimmzuege" class="upd" style="width:4em;text-align:right" type="text" tabindex="11">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Links</td>
+          <td class="ui-widget-content">
+            <input name="Links" class="upd" style="width:3em;text-align:right" type="text" tabindex="6">
+          </td>
+          <td class="ui-widget-header">Bauch</td>
+          <td class="ui-widget-content">
+            <input name="Bauch" class="upd" style="width:4em;text-align:right" type="text" tabindex="12">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Grätsche</td>
+          <td class="ui-widget-content">
+            <input name="Graetsche" class="upd" style="width:3em;text-align:right" type="text" tabindex="7">
+          </td>
+          <td class="ui-widget-header">Lauf</td>
+          <td class="ui-widget-content">
+            <input name="Lauf" class="upd" style="width:4em;text-align:right" type="text" tabindex="13">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Sitz</td>
+          <td class="ui-widget-content">
+            <input name="Sitz" class="upd" style="width:3em;text-align:right" type="text" tabindex="8">
+          </td>
+          <td class="ui-widget-header">Seil</td>
+          <td class="ui-widget-content">
+            <input name="Seil" class="upd" style="width:4em;text-align:right" type="text" tabindex="14">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Brücke</td>
+          <td class="ui-widget-content">
+            <input name="Bruecke" class="upd" style="width:3em;text-align:right" type="text" tabindex="9">
+          </td>
+          <td class="ui-widget-header">Dähnung</td>
+          <td class="ui-widget-content">
+            <input name="D" disabled style="width:4em;text-align:right" type="text">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header" colspan="2"></td>
+          <td class="ui-widget-header">Kraft</td>
+          <td class="ui-widget-content">
+            <input name="K" disabled style="width:4em;text-align:right" type="text">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>

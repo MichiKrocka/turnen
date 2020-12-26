@@ -1,0 +1,158 @@
+<style type="text/css">
+<!--
+#id_adm_div{
+  border-top-width:0;
+  border-left-width:0;
+  border-right-width:0;
+  padding:0.5em;
+}
+#iid_toolbar>* {
+  height:2em;
+}
+#iid_toolbar>button {
+  height:2.15em;
+}
+.menu-button, .ui-selectmenu-button{
+   vertical-align : middle;
+}
+.overflow {
+  height:20em;
+}
+-->
+</style>
+<div class="lang ui-widget ui-widget-header ui-corner-top" id="id_adm_div">Options</div>
+<div id="id_toolbar" style="margin:4px">
+  <select name="theme" id="id_Theme" style="width:10em">
+    <option value="" class="ui-state-disabled" selected disabled>
+      <div class="lang">Theme</div>
+    </option>
+  </select>
+  <select name="lang" id="id_Language" style="width:10em">
+    <option value="" class="ui-state-disabled" selected disabled>
+      <div>Language</div>
+    </option>
+  </select>
+  <button class="lang-title" data-choice="PSWD" title="Password">
+    <span class="lang">Password</span>
+  </button>
+  <div id="id_USER_Dialog" style="display:none">
+    <input id="id_USER_pswd" type="text" class="ui-widget-content ui-corner-all" style="width:100%">
+  </div>
+</div>
+<script language="JavaScript" type="text/javascript">
+// #####################################################################
+jQuery(function($){
+  if(!oAccess[oUser.menu].acc)
+    return;
+  f_theme();
+  // -------------------------------------------------------------------
+  function f_theme(){
+    $.post("/dir", {
+        path: AccessDir + DIR_THEMES
+      }, function(data){
+      var A = data.split("\n");
+      A.sort();
+      for(var i in A)
+        $("#id_Theme").append($('<option>', {value: A[i], text: A[i]}));
+      $("#id_Theme")
+      .selectmenu({
+        position: {my:"top", at:"center bottom"},
+        change: function( ev, ui ){
+          var locStr = DIR_THEMES + "/" + ui.item.value + "/jquery-ui.min.css";
+          update_css(locStr);
+          $("#id_LayoutSwitch, #id_LayoutButtons").toggle();
+          $.cookie(COOKIE_THEMES, ui.item.value );
+          oUser.theme = ui.item.value;
+        }
+      })
+      .selectmenu("menuWidget")
+      .addClass("overflow");
+      f_lang();
+    });
+  }
+  // -------------------------------------------------------------------
+  function f_lang(){
+    $.post("/dir", {
+        path: AccessDir + DIR_LANG
+      }, function(data){
+      var A = data.split("\n");
+      A.unshift("en-en");
+      A.sort(stringComparison);
+      for(var i in A){
+        A[i] = A[i].replace(/\.json/g, "");
+        $("#id_Language").append($('<option>', {value: A[i], text: A[i]}));
+      }
+      $("#id_Language")
+      .selectmenu({
+        position: {my:"top", at:"center bottom"},
+        change: function( ev, ui ){
+          set_lang(ui.item.value);
+          change_all_lang("body");
+          setTimeout(function(){
+            $("#id_Language").selectmenu("refresh");
+            $("#id_Theme").selectmenu("refresh");
+          }, 0);
+          oUser.lang = ui.item.value;
+        },
+        close: null
+      })
+      .selectmenu("menuWidget")
+      .addClass("overflow");
+      $("#id_toolbar").controlgroup();
+    });
+  }
+  // -------------------------------------------------------------------
+  $("#id_Content button").button().click(function(ev){
+    var C = $(this).data("choice");
+    switch(C){
+      case "PSWD":
+        $("#id_USER_Dialog").dialog("option", "all", false);
+        oDialogPasswd.dialog("open");
+        break;
+      default:
+        console.log(C, this);
+    }
+  });
+  // -------------------------------------------------------------------
+  var oDialogPasswd = $("#id_USER_Dialog").dialog({
+    autoOpen: false,
+    width: "auto",
+    modal: true,
+    title: _("Password"),
+    all: true,
+    buttons: [
+      {
+        id:"id_OK",
+        text:_("OK"),
+        click:function(){
+          oUser.pswd = $.md5($("#id_USER_pswd").val());
+          oDialogPasswd.dialog("close");
+        }
+      },
+      {
+        id:"id_Cancel",
+        text:_("Cancel"),
+        click: function(){
+          $(this).dialog("close");
+        }
+      }
+    ],
+    close: function() {
+    },
+    open: function(ev, ui){
+      setTimeout(function(){
+        $("#id_USER_pswd")
+          .val("")
+          .focus()
+          .keydown(function(ev){
+            if(ev.which == 13){
+              $("#id_OK").click();
+              return false;
+            }
+          });
+      }, 300);
+    }
+  });
+  // -------------------------------------------------------------------
+});
+</script>

@@ -1,0 +1,116 @@
+html,
+body {
+  width:100%;
+  height:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  font-size:14px;
+/*
+  font-size:1.9vh;
+*/
+  overflow:hidden;
+}
+.ui-button-icon-only,
+.ui-button {
+  font-size:1em !important;
+  vertical-align:top;
+  padding:1px;
+}
+.ui-button-text,
+.ui-selectmenu-text {
+  font-size:inherit !important;
+}
+
+#id_Login_Tab {
+  border:0;
+  font-size:1.5em;
+}
+#id_Login_Tab input {
+  width:12em;
+  font-size:1.0em;
+}
+#id_Login_Tab a {
+  font-size:0.8em;
+  text-decoration:none;
+  color:black;
+}
+#id_Login_Msg {
+  color:red;
+  vertical-align:top;
+  border:1px solid white;
+}
+
+#id_Main {
+  -moz-box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+  box-sizing:border-box;
+  height:100%;
+  width:100%;
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+  margin:0;
+  padding:0;
+  border-collapse: collapse;
+}
+#id_Main>thead>tr,
+#id_Main>tfoot>tr {
+  height:1%;
+}
+#id_Main>thead>td {
+  -moz-box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+  box-sizing:border-box;
+  padding:2px;
+  border:0;
+}
+#id_Main>tbody>tr>td {
+  -moz-box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+  box-sizing:border-box;
+  text-align:left;
+  vertical-align:top;
+  padding:4px;
+  border:0;
+  white-space:nowrap;
+}
+#id_Content>div {
+  -moz-box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+  box-sizing:border-box;
+  height:100%;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  min-width:5em;
+}
+
+#id_Menu {
+  -moz-box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+  box-sizing:border-box;
+  min-width:10em;
+  height:100%;
+}
+
+#id_Login_Form,
+#id_Login_Tab {
+  height:100%;
+  border:0;
+  margin:0;
+  padding:0;
+}
+#id_Login_Tab td.links {
+  vertical-align:top;
+  text-align:left;
+  font-size:0.6em;
+  font-family: Verdana,Arial,sans-serif;
+  white-space:nowrap;
+  line-height:1.7em;
+}

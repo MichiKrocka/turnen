@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html style="">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=EDGE">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=yes">
+  <title>Kraft</title>
+  <link type="text/css" rel="StyleSheet" href="themes/base/jquery-ui.min.css">
+<script async type="text/javascript" src="/lib/js/fallback.min.js"></script>
+<style type="text/css">
+<!--
+body,html,select {
+  font-size:100%;
+}
+.template {
+  display:none;
+}
+caption {
+  text-align:left;
+  font-weight:bold;
+  padding:3px;
+}
+table {
+  border-collapse:collapse;
+  margin-top:10px;
+  width:100%;
+}
+table td:nth-child(1) {
+  text-align:center;
+}
+table td:nth-child(n+2) {
+  text-align:right;
+}
+-->
+</style>
+<script>
+var oFallback = {
+  // js
+  'jQuery': [
+    'https://code.jquery.com/jquery-3.1.1.min.js',
+    '/lib/js/jquery.min.js'
+  ],
+  'jQuery.printf': [
+    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.printf.min.js',
+    '/lib/js/jquery.printf.min.js'
+  ]
+};
+// ---------------------------------------------------------------------
+function load(){
+  if(location.href.substr(-1) == "#"){
+    for(var o in oFallback){
+      oFallback[o].reverse();
+    }
+  }
+  fallback.load(
+    oFallback,
+    {
+      shim: {
+      'jQuery.printf': ['jQuery']
+      }
+    }
+  );
+  fallback.ready(function(){
+    start();
+  });
+}
+// ---------------------------------------------------------------------
+var N    = "",  // Name
+    Y    = "",  // Jahr
+    B    = "",  // Jahrgang
+    AK   = "",  // Altersklasse
+    Data = [];  // alle Daten
+// ---------------------------------------------------------------------
+function start(){
+  var o = {
+    base: "database/turnen_sql/turnen.sqlite",
+    cmd:  [{
+      sgn:   "NAME",
+      query: 'SELECT id,Nachname||" "||Vorname AS Name, strftime("%Y", Datum) AS B FROM GymName WHERE (SELECT COUNT(*) FROM GymTest WHERE GymTest.mid=GymName.id) ORDER BY Datum DESC, 2 ASC',
+      para: []
+    },{
+      sgn:   "Y",
+      query: 'SELECT strftime("%Y", Datum) AS Y FROM GymTest GROUP BY 1 ORDER BY 1 DESC',
+      para: []
+    },{
+      sgn:   "B",
+      query: 'SELECT strftime("%Y", Datum) AS B FROM GymName WHERE (SELECT COUNT(*) FROM GymTest WHERE GymTest.mid=GymName.id) GROUP BY B ORDER BY Datum DESC',
+      para: []
+    },{
+      sgn:   "AK",
+      query: 'SELECT Datum, strftime("%Y", Datum)-strftime("%Y", (SELECT Datum FROM GymName WHERE GymName.id=GymTest.mid)) AS AK FROM GymTest GROUP BY AK',
+      para: []
+    }]
+  };
+  o.cmd = JSON.stringify(o.cmd);
+  $.post("/sql", o, function(D){
+    // Name
+    var A = ['<option value="">-- Name --</option>'];
+    for(var y in D.NAME){
+      A.push('<option value="'+D.NAME[y].Name+'">'+D.NAME[y].Name+'</option>');
+    }
+    $("select[name=NAME]")
+    .html(A.join(""));    
+    // Jahr
+    A = ['<option value="">-- Jahr --</option>'];
+    for(var y in D.Y)
+      A.push('<option value="'+D.Y[y].Y+'">'+D.Y[y].Y+'</option>');
+    $("select[name=Y]")
+    .html(A.join(""));
+    // Jahrgang
+    A = ['<option value="">-- Jahrgang --</option>'];
+    for(var y in D.B){
+      A.push('<option value="'+D.B[y].B+'">'+D.B[y].B+'</option>');
+    }
+    $("select[name=B]")
+    .html(A.join(""));
+    // AK
+    A = ['<option value="">-- AK --</option>'];
+    for(var y in D.AK){
+      A.push('<option value="'+D.AK[y].AK+'">'+D.AK[y].AK+'</option>');
+    }
+    $("select[name=AK]")
+    .html(A.join(""));
+
+    $("select").change(function(ev){
+      switch(this.name){
+        case "NAME":
+          N = this.value;
+          break;
+        case "Y":
+          Y = this.value;
+          break;
+        case "B":
+          B = this.value;
+          break;
+        case "AK":
+          AK = this.value;
+          break;
+      }
+      make_tabs();
+    });
+    load_data(make_tabs);
+  });
+}
+// ---------------------------------------------------------------------
+function  load_data(callBack){
+  var o = {
+    base: "database/turnen_sql/turnen.sqlite",
+    cmd:  [{
+      sgn:   "TEST",
+      query:'\
+  SELECT \
+  (SELECT Datum FROM GymName WHERE GymName.id=GymTest.mid) AS D,\
+  (SELECT Nachname||" "||Vorname||" "||strftime("%d.%m.%Y", Datum) FROM GymName WHERE GymName.id=GymTest.mid) AS Name,\
+  (SELECT Nachname||" "||Vorname FROM GymName WHERE GymName.id=GymTest.mid) AS N,\
+  (SELECT strftime("%Y", Datum) FROM GymName WHERE GymName.id=GymTest.mid) AS B,\
+  strftime("%Y", Datum) AS Y,\
+  strftime("%m-%Y", Datum) AS Test,\
+  strftime("%Y", Datum)-strftime("%Y", (SELECT Datum FROM GymName WHERE GymName.id=GymTest.mid)) AS AK,\
+  Mitte,\
+  Links,\
+  Rechts,\
+  Graetsche AS Graetsche,\
+  Sitz AS Graetschesitz,\
+  Bruecke AS Bruecke,\
+  Beugestuetze AS Stutz,\
+  Klimmzuege AS Zug,\
+  Bauch,\
+  Lauf,\
+  Seil,\
+  ROUND((Mitte+Links+Rechts+Graetsche+Sitz+Bruecke) / 6,2) AS Dehnung,\
+  Beugestuetze+Klimmzuege+Bauch AS Kraft,\
+  Notiz \
+FROM GymTest \
+WHERE mid IN (SELECT id FROM GymName)\
+ORDER BY D DESC,mid,Datum',
+      para: []
+    }]
+  };
+  o.cmd = JSON.stringify(o.cmd);
+  $.post("/sql", o, function(D){
+    Data = D.TEST;
+    if(callBack)
+      callBack();
+  })
+  .fail(function(err){
+    console.log(err);
+    Data = [];
+    if(callBack)
+      callBack();
+  });
+}
+// ---------------------------------------------------------------------
+function make_tabs(){
+  var HTML = [];
+  $("table.val").remove();
+  if(Data.length){
+    var Name = "";
+    for(var i in Data) {
+      // Filter
+      if(
+        (Data[i].N  != N  && N  != "") ||
+        (Data[i].Y  != Y  && Y  != "") ||
+        (Data[i].B  != B  && B  != "") ||
+        (Data[i].AK != AK && AK != "")
+      ){
+        //console.log(Data[i].Name);
+        continue;
+      }
+      if(Data[i].Name != Name){
+        if(Name != ""){
+          $("table.template caption").text(Name);
+          $("table.template tbody").html(HTML.join(""));
+          $("table.template")
+          .clone()
+          .removeClass("template")
+          .addClass("val")
+          .appendTo("body");
+        }
+        Name = Data[i].Name;
+        HTML = [];
+      }
+      with(Data[i]){
+        HTML.push($.sprintf(
+          '<tr>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '<td>%s</td>'+
+          '</tr>',
+          Test, Mitte, Links, Rechts, Graetsche, Graetschesitz, Bruecke,
+          Stutz, Zug, Bauch, Lauf, Seil,
+          Dehnung, Kraft
+        ));
+      }
+    }
+    if(Name != ""){
+      $("table.template caption").text(Name);
+      $("table.template tbody").html(HTML.join(""));
+      $("table.template")
+      .clone()
+      .removeClass("template")
+      .addClass("val")
+      .appendTo("body");
+    }
+  }
+  $("table tbody td").addClass("ui-widget-content");
+}
+// ---------------------------------------------------------------------
+</script>
+<body onload="load()">
+  <table class="template">
+    <caption></caption>
+    <thead class="ui-widget-header">
+      <tr>
+        <th>Zeitpunkt</th>
+        <th>Mitte</th>
+        <th>Links</th>
+        <th>Rechts</th>
+        <th>Grätsche</th>
+        <th>Gr.Sitz</th>
+        <th>Brücke</th>
+        <th>Stütze</th>
+        <th>Züge</th>
+        <th>Bauch</th>
+        <th>Lauf</th>
+        <th>Seil</th>
+        <th>Dehnung</th>
+        <th>Kraft</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div style="position:fixed;top:5px">
+    <select name="NAME">
+      <option value="">-- Name --</option>
+    </select>
+    <select name="Y"></select>
+    <select name="B">
+      <option value="">-- Jahrgang --</option>
+    </select>
+    <select name="AK">
+      <option value="">-- AK --</option>
+    </select>
+  </div>
+  <div class="c_body" style="margin-top:50px;width:100%"></div>
+</body>
+</html>
