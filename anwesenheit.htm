@@ -57,11 +57,9 @@ table.c_body td div {
 var oFallback = {
   // js
   'jQuery': [
-    'https://code.jquery.com/jquery-3.1.1.min.js',
     '/lib/js/jquery.min.js'
   ],
   'jQuery.printf': [
-    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.printf.min.js',
     '/lib/js/jquery.printf.min.js'
   ]
 };
@@ -91,7 +89,7 @@ var D = new Date(),
 // ---------------------------------------------------------------------
 function start(){
   var o = {
-    base: "database/turnen_sql/turnen.sqlite",
+    base: "data/turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "Y",
       query: 'SELECT strftime("%Y", Datum) AS Y FROM GymEvent GROUP BY 1 ORDER BY 1 DESC',
@@ -122,7 +120,7 @@ function start(){
 function  make_divs(){
   $("table.c_body").html('<tr><td style="display:none"></td><td style="font-size:2em">Bitte warten...</td></tr>');
   var o = {
-    base: "database/turnen_sql/turnen.sqlite",
+    base: "data/turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "N",
       query:

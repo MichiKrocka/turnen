@@ -1,16 +1,16 @@
 <style type="text/css">
 <!--
-#id_Michis {
+#id_Club {
   width:100%;
   height:auto;
   overflow:auto;
 }
-#id_Michis .mk-content-right,
-#id_Michis .mk-search,
-#id_Michis .mk-header {
+#id_Club .mk-content-right,
+#id_Club .mk-search,
+#id_Club .mk-header {
   border:0;
 }
-#id_Michis .mk-footer {
+#id_Club .mk-footer {
   border-right-width:0;
   border-bottom-width:0;
 }
@@ -58,61 +58,84 @@ jQuery(function($){
   function make(){
     $.Topic("selectMenu").subscribe(selectMenu);
     $.Topic("logout").subscribe(saveOption);
-    $T = $("#id_Michis").tables({
+    $T = $("#id_Club").tables({
       colModel: [{
-        indx:   "X",
+        indx:   "x",
         title:  "X",
         show:   true,
         search:  true,
         align:  "center",
         width:  "3em"
       },{
-        indx:   "Datum",
-        title:  "Datum",
-        show:   true,
-        search:  true,
-        align:  "center",
-        width:  "7em"
-      },{
-        indx:   "CASE WHEN Nachname<>'' THEN Nachname||' ' ELSE '' END||Vorname",
+        indx:   "name",
         title:  "Name",
         show:   true,
         search:  true,
         align:  "left",
-        width:  "18em"
+        width:  "14em"
+      },{
+        indx:   "email",
+        title:  "E-Mail",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "14em"
+      },{
+        indx:   "adresse",
+        title:  "Adresse",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "20em"
+      },{
+        indx:   "telefon",
+        title:  "Telefon",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "14em"
+      },{
+        indx:   "notiz",
+        title:  "Notiz",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "20em"
       }],
       dataModel: $.extend({}, sqliteDataModel),
       alignTitle: "center",
       Rows:      10,
-      Left:      0,
+      Left:      2,
       Header:    null,
       Footer:    null,
       ID:        "id",
 
       User:         oUser.dbuser, // dbuser
-      Sign:         SIGN_GYMNAME, // navig identification
+      Sign:         SIGN_CLUB, // navig identification
 
       SQL_SysBase:  SQL_SYS_BASE,
       SQL_SysTable: SQL_SYS_TABLE,
       SQL_Base:     SQL_BASE_DIR + "turnen.sqlite",
-      SQL_Table:    "GymName",
-      SQL_Query:    "SELECT * FROM GymName",
+      SQL_Table:    "club",
+      SQL_Query:    "SELECT * FROM club",
       // functions + events
       i18n:         __,
       refreshRec: function(ev, ui){
         window.GYM_MID = ui.REC.length ? ui.REC[0].id : null;
       },
-/*
       beforeEdit: function(ev, ui){
-        $("button", ui.form).button("enable");
       },
       closeEdit: function(ev, ui){
-        $("button", ui.form).button("disable");
-      }
-*/
+      },
       build: function(ev, ui){
         change_all_lang(this);
       }      
+    });
+    $('#id_ClubMail').click(function(ev){
+      var to = $('[name=email]', '#id_Club_Form').val();
+
+      if(to != "")
+        window.open("mailto:"+to);
     });
     setTimeout(function(){
       $T.focus();
@@ -121,30 +144,71 @@ jQuery(function($){
   // -------------------------------------------------------------------
 });
 </script>
-<div id="id_Michis" style="display:none" class="ui-corner-top">
-  <form id="id_Michis_Form" style="display:block" class="mk-tables-form">
+<div id="id_Club" style="display:none" class="ui-corner-top">
+  <form id="id_Club_Form" style="display:block" class="mk-tables-form">
     <input type="submit" tabindex="-1" style="position:absolute; top:-1000px;display:none">
-    <table id="id_Michis_Table" tabindex="2">
+    <table id="id_Club_Table" tabindex="2">
       <tbody>
         <tr>
           <td class="ui-widget-content ui-state-disabled" style="width:1%">
             <input name="id" style="width:100%;text-align:center;background:transparent" type="text" disabled>
           </td>
-          <td class="ui-widget-content" style="width:1%">
-            <input data-enum='["X","-"]' type="button" name="X" class="enum upd" style="background-color:transparent;width:100%" tabindex="4">
+          <td class="ui-widget-content" style="width:3em">
+            <input data-enum='["X","-"]' type="button" name="x"
+            class="enum upd" style="background-color:transparent;width:100%" tabindex="4">
           </td>
-          <td class="ui-widget-header"></td>
-          <td class="ui-widget-header" style="width:1%;text-align:left">Notiz</td>
-          <td class="ui-widget-content" rowspan="4" style="padding:0;width:99%">
-            <textarea name="Notiz" tabindex="7" class="upd"></textarea>
+          <td class="ui-widget-header" style="wwidth:1%"></td>
+          <td class="ui-widget-header" style="width:49%;text-align:left">Adresse</td>
+          <td class="ui-widget-header" style="width:49%;text-align:left">Notiz</td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Name</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="name" class="upd" style="width:20em" type="text" tabindex="4">
+          </td>
+          <td class="ui-widget-content" rowspan="6" style="padding:0">
+            <textarea name="adresse" tabindex="7" class="upd"></textarea>
+          </td>
+          <td class="ui-widget-content" rowspan="6" style="padding:0">
+            <textarea name="notiz" tabindex="7" class="upd"></textarea>
           </td>
         </tr>
         <tr>
-          <td class="ui-widget-header">Vorname</td>
-          <td class="ui-widget-content" colspan="3">
-            <input name="Vorname" class="upd" style="width:20em" type="text" tabindex="4">
+          <td class="ui-widget-header">E-Mail</td>
+          <td id="id_ClubMail" class="ui-button"
+            style="text-align:center;padding-top:2px;padding-bottom:2px;border:0">
+            <i class="fa fa-fw fa-envelope-o"></i>
+          </td>
+          <td class="ui-widget-content">
+            <input name="email" class="upd" type="text" tabindex="4">
           </td>
         </tr>
+        <tr>
+          <td class="ui-widget-header">Telefon</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="telefon" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+
+        <tr>
+          <td class="ui-widget-header">Bank</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="bank" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">IBAN</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="iban" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">BIC</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="bic" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+<!--        
         <tr>
           <td class="ui-widget-header">Nachname</td>
           <td class="ui-widget-content" colspan="3">
@@ -157,6 +221,7 @@ jQuery(function($){
             <input name="Datum" class="datepicker upd" type="text" tabindex="6">
           </td>
         </tr>
+-->        
       </tbody>
     </table>
   </form>

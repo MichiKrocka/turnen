@@ -52,7 +52,8 @@ jQuery(function($){
   }
   // -------------------------------------------------------------------
   function saveOption(){
-    $T.tables("saveOption");
+    if(typeof $T != "undefined")
+      $T.tables("saveOption");
   }
   // -------------------------------------------------------------------
   function make(){

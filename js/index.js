@@ -23,6 +23,7 @@ var DIR_MENU      = "menu",            // directory with menus
     SIGN_GYMNAME        = "GymName",
     SIGN_GYMTEST        = "GymTest",
     SIGN_GYMEVENT       = "GymEvent",
+    SIGN_CLUB           = "Club",
 
     SIGN_USER           = "User",
     SIGN_GRP            = "Group",

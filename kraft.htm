@@ -39,11 +39,9 @@ table td:nth-child(n+2) {
 var oFallback = {
   // js
   'jQuery': [
-    'https://code.jquery.com/jquery-3.1.1.min.js',
     '/lib/js/jquery.min.js'
   ],
   'jQuery.printf': [
-    'http://www.bayern-surf.de/krocka/cdn/lib/js/jquery.printf.min.js',
     '/lib/js/jquery.printf.min.js'
   ]
 };
@@ -75,7 +73,7 @@ var N    = "",  // Name
 // ---------------------------------------------------------------------
 function start(){
   var o = {
-    base: "database/turnen_sql/turnen.sqlite",
+    base: "data/turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "NAME",
       query: 'SELECT id,Nachname||" "||Vorname AS Name, strftime("%Y", Datum) AS B FROM GymName WHERE (SELECT COUNT(*) FROM GymTest WHERE GymTest.mid=GymName.id) ORDER BY Datum DESC, 2 ASC',
@@ -147,7 +145,7 @@ function start(){
 // ---------------------------------------------------------------------
 function  load_data(callBack){
   var o = {
-    base: "database/turnen_sql/turnen.sqlite",
+    base: "data/turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "TEST",
       query:'\
