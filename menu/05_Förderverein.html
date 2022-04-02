@@ -74,6 +74,13 @@ jQuery(function($){
         align:  "left",
         width:  "14em"
       },{
+        indx:   "fee",
+        title:  "Gebühr",
+        show:   true,
+        search:  true,
+        align:  "right",
+        width:  "4em"
+      },{
         indx:   "email",
         title:  "E-Mail",
         show:   true,
@@ -81,21 +88,14 @@ jQuery(function($){
         align:  "left",
         width:  "14em"
       },{
-        indx:   "adresse",
+        indx:   "address",
         title:  "Adresse",
         show:   true,
         search:  true,
         align:  "left",
         width:  "20em"
       },{
-        indx:   "telefon",
-        title:  "Telefon",
-        show:   true,
-        search:  true,
-        align:  "left",
-        width:  "14em"
-      },{
-        indx:   "notiz",
+        indx:   "note",
         title:  "Notiz",
         show:   true,
         search:  true,
@@ -166,11 +166,11 @@ jQuery(function($){
           <td class="ui-widget-content" colspan="2">
             <input name="name" class="upd" style="width:20em" type="text" tabindex="4">
           </td>
-          <td class="ui-widget-content" rowspan="6" style="padding:0">
-            <textarea name="adresse" tabindex="7" class="upd"></textarea>
+          <td class="ui-widget-content" rowspan="9" style="padding:0">
+            <textarea name="address" tabindex="7" class="upd"></textarea>
           </td>
-          <td class="ui-widget-content" rowspan="6" style="padding:0">
-            <textarea name="notiz" tabindex="7" class="upd"></textarea>
+          <td class="ui-widget-content" rowspan="9" style="padding:0">
+            <textarea name="note" tabindex="7" class="upd"></textarea>
           </td>
         </tr>
         <tr>
@@ -186,14 +186,33 @@ jQuery(function($){
         <tr>
           <td class="ui-widget-header">Telefon</td>
           <td class="ui-widget-content" colspan="2">
-            <input name="telefon" class="upd" type="text" tabindex="4">
+            <input name="phone" class="upd" type="text" tabindex="4">
           </td>
         </tr>
 
         <tr>
-          <td class="ui-widget-header">Bank</td>
+          <td class="ui-widget-header">Geburtstag</td>
           <td class="ui-widget-content" colspan="2">
-            <input name="bank" class="upd" type="text" tabindex="4">
+            <input name="birthday" class="upd" type="date" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Eintritt</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="entry" class="upd" type="date" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Austritt</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="exit" class="upd" type="date" tabindex="4">
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="ui-widget-header">Gebühr</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="fee" class="upd" type="text" tabindex="4">
           </td>
         </tr>
         <tr>
@@ -208,20 +227,6 @@ jQuery(function($){
             <input name="bic" class="upd" type="text" tabindex="4">
           </td>
         </tr>
-<!--        
-        <tr>
-          <td class="ui-widget-header">Nachname</td>
-          <td class="ui-widget-content" colspan="3">
-            <input name="Nachname" class="upd" type="text" tabindex="5">
-          </td>
-        </tr>
-        <tr>
-          <td class="ui-widget-header">Datum</td>
-          <td class="ui-widget-content" colspan="3">
-            <input name="Datum" class="datepicker upd" type="text" tabindex="6">
-          </td>
-        </tr>
--->        
       </tbody>
     </table>
   </form>
