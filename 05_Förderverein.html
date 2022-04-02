@@ -1,0 +1,233 @@
+<style type="text/css">
+<!--
+#id_Club {
+  width:100%;
+  height:auto;
+  overflow:auto;
+}
+#id_Club .mk-content-right,
+#id_Club .mk-search,
+#id_Club .mk-header {
+  border:0;
+}
+#id_Club .mk-footer {
+  border-right-width:0;
+  border-bottom-width:0;
+}
+-->
+</style>
+<script>
+jQuery(function($){
+  // -------------------------------------------------------------------
+  var $T,
+      slfMenuFile = oUser.menu;
+  // -------------------------------------------------------------------
+  make();
+  // -------------------------------------------------------------------
+  function selectMenu(ui){
+    var oldMenuFile  = $(ui.oldMenu).data("menu"),
+        newMenuFile  = $(ui.newMenu).data("menu");
+
+    if(DEBUG > 0 && newMenuFile != slfMenuFile){
+      saveOption();
+      var div_menu = $("#id_Content>div").filter('[data-menu="'+oldMenuFile+'"]');
+      $.Topic("selectMenu").unsubscribe(selectMenu);
+      $.Topic("logout").unsubscribe(saveOption);
+      $T.tables("destroy");
+      div_menu.detach();
+      return
+    }
+
+    if(newMenuFile == slfMenuFile){
+      $.Topic("logout").subscribe(saveOption);
+      if(typeof $T != "undefined")
+        $T
+        .tables("refresh")
+        .focus();
+    } else if(oldMenuFile == slfMenuFile){
+      saveOption();
+      $.Topic("logout").unsubscribe(saveOption);
+    }
+  }
+  // -------------------------------------------------------------------
+  function saveOption(){
+    if(typeof $T != "undefined")
+      $T.tables("saveOption");
+  }
+  // -------------------------------------------------------------------
+  function make(){
+    $.Topic("selectMenu").subscribe(selectMenu);
+    $.Topic("logout").subscribe(saveOption);
+    $T = $("#id_Club").tables({
+      colModel: [{
+        indx:   "x",
+        title:  "X",
+        show:   true,
+        search:  true,
+        align:  "center",
+        width:  "3em"
+      },{
+        indx:   "name",
+        title:  "Name",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "14em"
+      },{
+        indx:   "fee",
+        title:  "Gebühr",
+        show:   true,
+        search:  true,
+        align:  "right",
+        width:  "4em"
+      },{
+        indx:   "email",
+        title:  "E-Mail",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "14em"
+      },{
+        indx:   "address",
+        title:  "Adresse",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "20em"
+      },{
+        indx:   "note",
+        title:  "Notiz",
+        show:   true,
+        search:  true,
+        align:  "left",
+        width:  "20em"
+      }],
+      dataModel: $.extend({}, sqliteDataModel),
+      alignTitle: "center",
+      Rows:      10,
+      Left:      2,
+      Header:    null,
+      Footer:    null,
+      ID:        "id",
+
+      User:         oUser.dbuser, // dbuser
+      Sign:         SIGN_CLUB, // navig identification
+
+      SQL_SysBase:  SQL_SYS_BASE,
+      SQL_SysTable: SQL_SYS_TABLE,
+      SQL_Base:     SQL_BASE_DIR + "turnen.sqlite",
+      SQL_Table:    "club",
+      SQL_Query:    "SELECT * FROM club",
+      // functions + events
+      i18n:         __,
+      refreshRec: function(ev, ui){
+        window.GYM_MID = ui.REC.length ? ui.REC[0].id : null;
+      },
+      beforeEdit: function(ev, ui){
+      },
+      closeEdit: function(ev, ui){
+      },
+      build: function(ev, ui){
+        change_all_lang(this);
+      }      
+    });
+    $('#id_ClubMail').click(function(ev){
+      var to = $('[name=email]', '#id_Club_Form').val();
+
+      if(to != "")
+        window.open("mailto:"+to);
+    });
+    setTimeout(function(){
+      $T.focus();
+    }, 1000);
+  }
+  // -------------------------------------------------------------------
+});
+</script>
+<div id="id_Club" style="display:none" class="ui-corner-top">
+  <form id="id_Club_Form" style="display:block" class="mk-tables-form">
+    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px;display:none">
+    <table id="id_Club_Table" tabindex="2">
+      <tbody>
+        <tr>
+          <td class="ui-widget-content ui-state-disabled" style="width:1%">
+            <input name="id" style="width:100%;text-align:center;background:transparent" type="text" disabled>
+          </td>
+          <td class="ui-widget-content" style="width:3em">
+            <input data-enum='["X","-"]' type="button" name="x"
+            class="enum upd" style="background-color:transparent;width:100%" tabindex="4">
+          </td>
+          <td class="ui-widget-header" style="wwidth:1%"></td>
+          <td class="ui-widget-header" style="width:49%;text-align:left">Adresse</td>
+          <td class="ui-widget-header" style="width:49%;text-align:left">Notiz</td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Name</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="name" class="upd" style="width:20em" type="text" tabindex="4">
+          </td>
+          <td class="ui-widget-content" rowspan="9" style="padding:0">
+            <textarea name="address" tabindex="7" class="upd"></textarea>
+          </td>
+          <td class="ui-widget-content" rowspan="9" style="padding:0">
+            <textarea name="note" tabindex="7" class="upd"></textarea>
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">E-Mail</td>
+          <td id="id_ClubMail" class="ui-button"
+            style="text-align:center;padding-top:2px;padding-bottom:2px;border:0">
+            <i class="fa fa-fw fa-envelope-o"></i>
+          </td>
+          <td class="ui-widget-content">
+            <input name="email" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Telefon</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="phone" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+
+        <tr>
+          <td class="ui-widget-header">Geburtstag</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="birthday" class="upd" type="date" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Eintritt</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="entry" class="upd" type="date" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">Austritt</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="exit" class="upd" type="date" tabindex="4">
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="ui-widget-header">Gebühr</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="fee" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">IBAN</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="iban" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+        <tr>
+          <td class="ui-widget-header">BIC</td>
+          <td class="ui-widget-content" colspan="2">
+            <input name="bic" class="upd" type="text" tabindex="4">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>
