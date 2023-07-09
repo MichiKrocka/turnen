@@ -73,7 +73,7 @@ var N    = "",  // Name
 // ---------------------------------------------------------------------
 function start(){
   var o = {
-    base: "data/turnen_sql/turnen.sqlite",
+    base: "turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "NAME",
       query: 'SELECT id,Nachname||" "||Vorname AS Name, strftime("%Y", Datum) AS B FROM GymName WHERE (SELECT COUNT(*) FROM GymTest WHERE GymTest.mid=GymName.id) ORDER BY Datum DESC, 2 ASC',
@@ -145,7 +145,7 @@ function start(){
 // ---------------------------------------------------------------------
 function  load_data(callBack){
   var o = {
-    base: "data/turnen_sql/turnen.sqlite",
+    base: "turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "TEST",
       query:'\
