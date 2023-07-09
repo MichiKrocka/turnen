@@ -89,7 +89,7 @@ var D = new Date(),
 // ---------------------------------------------------------------------
 function start(){
   var o = {
-    base: "data/turnen_sql/turnen.sqlite",
+    base: "turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "Y",
       query: 'SELECT strftime("%Y", Datum) AS Y FROM GymEvent GROUP BY 1 ORDER BY 1 DESC',
@@ -120,7 +120,7 @@ function start(){
 function  make_divs(){
   $("table.c_body").html('<tr><td style="display:none"></td><td style="font-size:2em">Bitte warten...</td></tr>');
   var o = {
-    base: "data/turnen_sql/turnen.sqlite",
+    base: "turnen_sql/turnen.sqlite",
     cmd:  [{
       sgn:   "N",
       query:
